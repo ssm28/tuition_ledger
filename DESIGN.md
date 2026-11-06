@@ -72,3 +72,12 @@ Rules: inject only after the clean baseline passes validation; touch only the la
 
 - Confirm refund and late-fee percentages (section 3) before implementing.
 - Decide whether to commit the full-scale data or only the starter set plus checksums.
+
+## 7. How master data is generated
+
+- **Random streams:** each table draws from its own `random.Random(f"{seed}:{table}")`, so editing one generator never changes another table's numbers.
+- **Programs:** 20, from `reference_data.PROGRAMS` (12 UG, 8 PG); popularity weights make enrollment uneven.
+- **Fee schedules:** one row per program, term and fee type. LAB exists only for lab programs. Term factors: Spring 1.00, Summer 0.60, Fall 1.05, applied to every fee. Effective from 30 days before term start to term end.
+- **Scholarship schemes (Eligibility):** 8 schemes: merit tiers, need-based, middle-income, one program-specific (CS), one fellowship (Data Science) and one that expires on 2026-07-31 (tests effective dates).
+- **Students:** CGPA is normal(7.2, 1.0) clipped to 4.0-10.0; income band LOW/MIDDLE/HIGH is 30/50/20 percent; admission dates are before the first term so every student can enroll in all three terms. Every baseline student is ACTIVE.
+- The scholarship scheme thresholds will be tuned when awards are generated so that about 15,000 awards result.

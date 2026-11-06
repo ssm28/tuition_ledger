@@ -4,7 +4,10 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from .config import DEFAULT_SEED, Config
 from .docs import render_data_dictionary
+from .export import sha256_of, write_csv
+from .master import build_master
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -14,11 +17,22 @@ def main(argv: list[str] | None = None) -> int:
     p_docs = sub.add_parser("docs", help="Regenerate docs/data_dictionary.md from the schema")
     p_docs.add_argument("--out", type=Path, default=Path("docs/data_dictionary.md"))
 
+    p_master = sub.add_parser("master", help="Generate the master tables as CSV")
+    p_master.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    p_master.add_argument("--scale", type=float, default=1.0, help="1.0 = full volume")
+    p_master.add_argument("--out", type=Path, default=Path("out"))
+
     args = parser.parse_args(argv)
     if args.command == "docs":
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(render_data_dictionary() + "\n", encoding="utf-8", newline="\n")
         print(f"wrote {args.out}")
+    elif args.command == "master":
+        cfg = Config(seed=args.seed, scale=args.scale)
+        for table, rows in build_master(cfg).items():
+            path = args.out / f"{table}.csv"
+            write_csv(path, table, rows)
+            print(f"{table:<13} {len(rows):>6} rows  sha256={sha256_of(path)[:12]}  {path}")
     return 0
 
 
