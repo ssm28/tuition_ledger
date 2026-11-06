@@ -11,3 +11,4 @@ dist/
 .DS_Store
 # scratch output; committed datasets live in data/starter and data/full
 /out/
+code_report.txt
