@@ -49,10 +49,10 @@ Status: **draft rules for review**. Every rule here must be implemented in
 ## 4. Lifecycles
 
 - Enrollment: ENROLLED -> WITHDRAWN | COMPLETED | CANCELLED
-- Invoice: ISSUED -> PARTIALLY_PAID -> PAID; ISSUED / PARTIALLY_PAID -> OVERDUE; any open state -> CANCELLED
+- Invoice: ISSUED -> PARTIALLY_PAID | PAID | OVERDUE; PARTIALLY_PAID -> PAID | OVERDUE; OVERDUE -> PARTIALLY_PAID | PAID; any open state -> CANCELLED
 - Scholarship: AWARDED -> APPLIED | REVOKED
 - Payment: POSTED -> REVERSED
-- Refund: REQUESTED -> APPROVED -> PAID | REJECTED
+- Refund: REQUESTED -> APPROVED | REJECTED; APPROVED -> PAID
 
 Each transition is a `status_event` row.
 
@@ -81,3 +81,12 @@ Rules: inject only after the clean baseline passes validation; touch only the la
 - **Scholarship schemes (Eligibility):** 8 schemes: merit tiers, need-based, middle-income, one program-specific (CS), one fellowship (Data Science) and one that expires on 2026-07-31 (tests effective dates).
 - **Students:** CGPA is normal(7.2, 1.0) clipped to 4.0-10.0; income band LOW/MIDDLE/HIGH is 30/50/20 percent; admission dates are before the first term so every student can enroll in all three terms. Every baseline student is ACTIVE.
 - The scholarship scheme thresholds will be tuned when awards are generated so that about 15,000 awards result.
+
+## 8. How enrollments and invoices are generated
+
+- Every student gets one enrollment per term (3 each, 30,000 total) and one invoice per enrollment, issued 1-10 days before term start, due 30 days later.
+- Outcome per enrollment is drawn once: 1.5% cancelled before term start (invoice CANCELLED too), 4% withdrawn after term start, the rest COMPLETED (the fixed as-of date is after every term).
+- Withdrawal day is drawn from four windows (1-14, 15-30, 31-45, 46+ days after start) so every refund tier appears in the data.
+- Invoice lines are copied from the fee schedule effective on the issue date; invoice totals are the sum of their lines.
+- Every status change is recorded in `status_event` (numbered in date order). The validator checks that each row's status equals the last event and that every step is an allowed transition.
+- Invoice statuses beyond ISSUED / CANCELLED (PARTIALLY_PAID, PAID, OVERDUE) are derived later, once payments exist.

@@ -31,6 +31,21 @@ LEDGER_TYPES = (
 )
 EVENT_ENTITIES = ("enrollment", "invoice", "scholarship", "payment", "refund")
 
+# Allowed status transitions per entity: {from_status: (to_status, ...)}.
+# `None` is the starting point (the row is created in its first status).
+LIFECYCLES = {
+    "enrollment": {None: ("ENROLLED",), "ENROLLED": ("WITHDRAWN", "COMPLETED", "CANCELLED")},
+    "invoice": {
+        None: ("ISSUED",),
+        "ISSUED": ("PARTIALLY_PAID", "PAID", "OVERDUE", "CANCELLED"),
+        "PARTIALLY_PAID": ("PAID", "OVERDUE", "CANCELLED"),
+        "OVERDUE": ("PARTIALLY_PAID", "PAID", "CANCELLED"),
+    },
+    "scholarship": {None: ("AWARDED",), "AWARDED": ("APPLIED", "REVOKED")},
+    "payment": {None: ("POSTED",), "POSTED": ("REVERSED",)},
+    "refund": {None: ("REQUESTED",), "REQUESTED": ("APPROVED", "REJECTED"), "APPROVED": ("PAID",)},
+}
+
 
 # ---------------------------------------------------------------- model
 @dataclass(frozen=True)
@@ -260,7 +275,7 @@ REFUND = Table(
         Field("amount", "decimal", unit="INR", rule="> 0; <= net paid for the student"),
         Field("requested_on", "date"),
         Field("processed_on", "date", required=False, rule=">= requested_on; set when PAID or REJECTED"),
-        Field("status", "string", allowed=REFUND_STATUS, rule="REQUESTED -> APPROVED -> PAID | REJECTED"),
+        Field("status", "string", allowed=REFUND_STATUS, rule="REQUESTED -> APPROVED | REJECTED; APPROVED -> PAID"),
     ),
     ("Refund N:1 Payment",),
 )

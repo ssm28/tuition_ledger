@@ -9,7 +9,7 @@ from tuition_synth.cli import main
 from tuition_synth.config import TERMS, Config
 from tuition_synth.export import sha256_of
 from tuition_synth.master import build_master
-from tuition_synth.reference_data import SCHEMES, TERM_FEE_FACTOR
+from tuition_synth.reference_data import SCHEMES
 from tuition_synth.schema import TABLES
 
 CFG = Config(scale=1.0)
@@ -73,17 +73,32 @@ def test_unique_business_keys():
     assert len(set(keys)) == len(keys)
 
 
-def test_term_specific_fees_follow_the_factors():
+# Independent source of truth: the rules written in DESIGN.md, NOT imported from
+# the code under test. If someone edits the factors in reference_data.py, this
+# test must fail.
+EXPECTED_FACTORS = {
+    "TERM-2026-SPRING": Decimal("1.00"),
+    "TERM-2026-SUMMER": Decimal("0.60"),
+    "TERM-2026-FALL": Decimal("1.05"),
+}
+
+
+def test_term_specific_fees_follow_the_documented_factors():
     amount = {(r["program_id"], r["term_id"], r["fee_type"]): r["amount"]
               for r in MASTER["fee_schedule"]}
     for (prog, term, fee), value in amount.items():
         spring = amount[(prog, "TERM-2026-SPRING", fee)]
-        expected = (spring * Decimal(TERM_FEE_FACTOR[term])).quantize(Decimal("0.01"))
-        assert value == expected, (prog, term, fee)
-    # and the terms really are priced differently
-    some = MASTER["program"][0]["program_id"]
-    prices = {t: amount[(some, t, "TUITION")] for t, *_ in TERMS}
-    assert prices["TERM-2026-SUMMER"] < prices["TERM-2026-SPRING"] < prices["TERM-2026-FALL"]
+        assert value == (spring * EXPECTED_FACTORS[term]).quantize(Decimal("0.01")), (prog, term, fee)
+
+
+def test_known_price_points():
+    """Hand-checked prices: B.Tech CS (PRG-001) tuition and LAB fee."""
+    amount = {(r["program_id"], r["term_id"], r["fee_type"]): r["amount"]
+              for r in MASTER["fee_schedule"]}
+    assert amount[("PRG-001", "TERM-2026-SPRING", "TUITION")] == Decimal("90000.00")
+    assert amount[("PRG-001", "TERM-2026-SUMMER", "TUITION")] == Decimal("54000.00")
+    assert amount[("PRG-001", "TERM-2026-FALL", "TUITION")] == Decimal("94500.00")
+    assert amount[("PRG-001", "TERM-2026-SUMMER", "LAB")] == Decimal("4800.00")
 
 
 def test_date_ordering():

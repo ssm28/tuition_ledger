@@ -267,7 +267,7 @@ Money returned to a student.
 | `amount` | decimal | yes |  |  | INR | > 0; <= net paid for the student |
 | `requested_on` | date | yes |  |  |  |  |
 | `processed_on` | date | no |  |  |  | >= requested_on; set when PAID or REJECTED |
-| `status` | string | yes |  | REQUESTED, APPROVED, PAID, REJECTED |  | REQUESTED -> APPROVED -> PAID \| REJECTED |
+| `status` | string | yes |  | REQUESTED, APPROVED, PAID, REJECTED |  | REQUESTED -> APPROVED \| REJECTED; APPROVED -> PAID |
 
 ### `ledger_entry` - LedgerEntry _(extension)_
 

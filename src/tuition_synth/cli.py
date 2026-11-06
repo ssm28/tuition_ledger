@@ -8,6 +8,8 @@ from .config import DEFAULT_SEED, Config
 from .docs import render_data_dictionary
 from .export import sha256_of, write_csv
 from .master import build_master
+from .transactions import build_core
+from .validate import run_all
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -22,6 +24,11 @@ def main(argv: list[str] | None = None) -> int:
     p_master.add_argument("--scale", type=float, default=1.0, help="1.0 = full volume")
     p_master.add_argument("--out", type=Path, default=Path("out"))
 
+    p_gen = sub.add_parser("generate", help="Generate all tables built so far, validate, and write CSVs")
+    p_gen.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    p_gen.add_argument("--scale", type=float, default=1.0, help="1.0 = full volume")
+    p_gen.add_argument("--out", type=Path, default=Path("out"))
+
     args = parser.parse_args(argv)
     if args.command == "docs":
         args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -33,6 +40,16 @@ def main(argv: list[str] | None = None) -> int:
             path = args.out / f"{table}.csv"
             write_csv(path, table, rows)
             print(f"{table:<13} {len(rows):>6} rows  sha256={sha256_of(path)[:12]}  {path}")
+    elif args.command == "generate":
+        cfg = Config(seed=args.seed, scale=args.scale)
+        tables = build_core(cfg)
+        for table, rows in tables.items():
+            path = args.out / f"{table}.csv"
+            write_csv(path, table, rows)
+            print(f"{table:<13} {len(rows):>7} rows  sha256={sha256_of(path)[:12]}")
+        issues = run_all(tables)
+        print(f"validation: {len(issues)} issue(s)")
+        return 1 if issues else 0
     return 0
 
 
