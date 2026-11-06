@@ -40,7 +40,6 @@ Academic program (20 in the baseline).
 | `program_code` | string | yes | yes |  |  | Short code, e.g. BTECH-CS |
 | `name` | string | yes |  |  |  |  |
 | `level` | string | yes |  | UG, PG |  |  |
-| `credits_per_term` | int | yes |  |  | credit hours | > 0; default load per term |
 
 ### `student` - Student
 
@@ -88,8 +87,7 @@ Fee definition per program, term and fee type, with effective dates.
 | `program_id` | string | yes |  |  |  |  |
 | `term_id` | string | yes |  |  |  |  |
 | `fee_type` | string | yes |  | TUITION, LAB, LIBRARY, TECHNOLOGY, ACTIVITY |  |  |
-| `basis` | string | yes |  | PER_TERM, PER_CREDIT |  |  |
-| `amount` | decimal | yes |  |  | INR | >= 0; per term or per credit hour per basis |
+| `amount` | decimal | yes |  |  | INR | >= 0; fixed amount charged per term |
 | `effective_from` | date | yes |  |  |  | <= effective_to |
 | `effective_to` | date | no |  |  |  | Open-ended if empty |
 | `status` | string | yes |  | ACTIVE, SUPERSEDED |  |  |
@@ -112,7 +110,6 @@ A student's enrollment in a program for one term.
 | `student_id` | string | yes |  |  |  |  |
 | `program_id` | string | yes |  |  |  |  |
 | `term_id` | string | yes |  |  |  |  |
-| `credit_hours` | int | yes |  |  | credit hours | > 0 |
 | `status` | string | yes |  | ENROLLED, WITHDRAWN, COMPLETED, CANCELLED |  | ENROLLED -> WITHDRAWN \| COMPLETED \| CANCELLED |
 | `enrolled_on` | date | yes |  |  |  | Within term window (or shortly before start) |
 | `withdrawn_on` | date | no |  |  |  | Required iff status = WITHDRAWN; >= enrolled_on |

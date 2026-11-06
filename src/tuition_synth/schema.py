@@ -16,7 +16,6 @@ LEVELS = ("UG", "PG")
 INCOME_BANDS = ("LOW", "MIDDLE", "HIGH")
 STUDENT_STATUS = ("ACTIVE", "WITHDRAWN", "GRADUATED")
 FEE_TYPES = ("TUITION", "LAB", "LIBRARY", "TECHNOLOGY", "ACTIVITY")
-FEE_BASIS = ("PER_TERM", "PER_CREDIT")
 SCHEDULE_STATUS = ("ACTIVE", "SUPERSEDED")
 ENROLLMENT_STATUS = ("ENROLLED", "WITHDRAWN", "COMPLETED", "CANCELLED")
 INVOICE_STATUS = ("ISSUED", "PARTIALLY_PAID", "PAID", "OVERDUE", "CANCELLED")
@@ -91,7 +90,6 @@ PROGRAM = Table(
         Field("program_code", "string", unique=True, rule="Short code, e.g. BTECH-CS"),
         Field("name", "string"),
         Field("level", "string", allowed=LEVELS),
-        Field("credits_per_term", "int", unit="credit hours", rule="> 0; default load per term"),
     ),
     ("Program 1:N Student (home program)", "Program 1:N FeeSchedule", "Program 1:N Enrollment"),
 )
@@ -122,8 +120,7 @@ FEE_SCHEDULE = Table(
         Field("program_id", "string", fk="program.program_id"),
         Field("term_id", "string", fk="term.term_id"),
         Field("fee_type", "string", allowed=FEE_TYPES),
-        Field("basis", "string", allowed=FEE_BASIS),
-        Field("amount", "decimal", unit="INR", rule=">= 0; per term or per credit hour per basis"),
+        Field("amount", "decimal", unit="INR", rule=">= 0; fixed amount charged per term"),
         Field("effective_from", "date", rule="<= effective_to"),
         Field("effective_to", "date", required=False, rule="Open-ended if empty"),
         Field("status", "string", allowed=SCHEDULE_STATUS),
@@ -140,7 +137,6 @@ ENROLLMENT = Table(
         Field("student_id", "string", fk="student.student_id"),
         Field("program_id", "string", fk="program.program_id"),
         Field("term_id", "string", fk="term.term_id"),
-        Field("credit_hours", "int", unit="credit hours", rule="> 0"),
         Field("status", "string", allowed=ENROLLMENT_STATUS,
               rule="ENROLLED -> WITHDRAWN | COMPLETED | CANCELLED"),
         Field("enrolled_on", "date", rule="Within term window (or shortly before start)"),

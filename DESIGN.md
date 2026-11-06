@@ -28,7 +28,7 @@ Status: **draft rules for review**. Every rule here must be implemented in
 
 ## 3. Business rules (draft)
 
-**Fees.** Each (program, term, fee type) has a FeeSchedule row with `basis` PER_TERM or PER_CREDIT. Summer fees differ from Spring/Fall so term-specific correctness is testable. An invoice line for a fee equals `amount` (PER_TERM) or `amount x credit_hours` (PER_CREDIT), using the schedule effective on the invoice issue date.
+**Fees.** Each (program, term, fee type) has a FeeSchedule row with one fixed `amount` charged per term (no credit-hour maths). Summer fees differ from Spring/Fall so term-specific correctness is testable. An invoice line for a fee equals the `amount` of the schedule effective on the invoice issue date.
 
 **Invoices.** One per enrollment, generated from eligible fee lines. `total_amount` = sum of its lines. Lines are append-only: late fees, scholarship credits and waivers are new lines, never edits.
 
