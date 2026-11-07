@@ -3,7 +3,7 @@ from datetime import date
 from decimal import Decimal
 
 from tuition_synth.rules import (
-    LATE_FEE_AMOUNT, award_amount, grace_end, is_eligible, late_fee_date, line_net_dues,
+    LATE_FEE_AMOUNT, award_amount, grace_end, is_eligible, late_fee_date, line_net_dues, refund_share,
 )
 
 D = Decimal
@@ -81,3 +81,9 @@ def test_net_dues_apply_credits_to_the_right_lines():
     dues = line_net_dues(lines)
     assert dues == {"L1": D("70000"), "L2": D("0"), "L5": D("500")}
     assert sum(dues.values()) == sum(ln["amount"] for ln in lines)
+
+
+def test_refund_tiers_at_every_boundary():
+    expected = {1: "1.00", 14: "1.00", 15: "0.50", 30: "0.50", 31: "0.25", 45: "0.25", 46: "0.00", 120: "0.00"}
+    for days, share in expected.items():
+        assert refund_share(days) == D(share), days

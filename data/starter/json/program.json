@@ -1,0 +1,22 @@
+[
+{"program_id": "PRG-001", "program_code": "BTECH-CS", "name": "B.Tech Computer Science", "level": "UG"},
+{"program_id": "PRG-002", "program_code": "BTECH-ME", "name": "B.Tech Mechanical Engineering", "level": "UG"},
+{"program_id": "PRG-003", "program_code": "BTECH-EE", "name": "B.Tech Electrical Engineering", "level": "UG"},
+{"program_id": "PRG-004", "program_code": "BTECH-CE", "name": "B.Tech Civil Engineering", "level": "UG"},
+{"program_id": "PRG-005", "program_code": "BSC-PHY", "name": "B.Sc Physics", "level": "UG"},
+{"program_id": "PRG-006", "program_code": "BSC-CHEM", "name": "B.Sc Chemistry", "level": "UG"},
+{"program_id": "PRG-007", "program_code": "BSC-MATH", "name": "B.Sc Mathematics", "level": "UG"},
+{"program_id": "PRG-008", "program_code": "BCA", "name": "Bachelor of Computer Applications", "level": "UG"},
+{"program_id": "PRG-009", "program_code": "BBA", "name": "Bachelor of Business Administration", "level": "UG"},
+{"program_id": "PRG-010", "program_code": "BCOM", "name": "B.Com", "level": "UG"},
+{"program_id": "PRG-011", "program_code": "BA-ENG", "name": "B.A. English", "level": "UG"},
+{"program_id": "PRG-012", "program_code": "BA-ECO", "name": "B.A. Economics", "level": "UG"},
+{"program_id": "PRG-013", "program_code": "MTECH-CS", "name": "M.Tech Computer Science", "level": "PG"},
+{"program_id": "PRG-014", "program_code": "MTECH-VLSI", "name": "M.Tech VLSI Design", "level": "PG"},
+{"program_id": "PRG-015", "program_code": "MBA", "name": "Master of Business Administration", "level": "PG"},
+{"program_id": "PRG-016", "program_code": "MCA", "name": "Master of Computer Applications", "level": "PG"},
+{"program_id": "PRG-017", "program_code": "MSC-PHY", "name": "M.Sc Physics", "level": "PG"},
+{"program_id": "PRG-018", "program_code": "MSC-DS", "name": "M.Sc Data Science", "level": "PG"},
+{"program_id": "PRG-019", "program_code": "MA-ENG", "name": "M.A. English", "level": "PG"},
+{"program_id": "PRG-020", "program_code": "MCOM", "name": "M.Com", "level": "PG"}
+]

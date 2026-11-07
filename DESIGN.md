@@ -7,7 +7,7 @@ Status: **draft rules for review**. Every rule here must be implemented in
 
 | # | Assumption | Why |
 |---|---|---|
-| A1 | Currency is INR; money is `Decimal` with 2 places. | Avoids float error; reconciliation must be exact. |
+| A1 | Currency is INR; money is `Decimal` with 2 places, rounded half-up (e.g. 617.285 becomes 617.29). | Avoids float error; reconciliation must be exact. |
 | A2 | Three terms in 2026 (Spring, Summer, Fall), one invoice per student per term, so about 3 invoices per student (30,000 / 10,000). | Matches the volume target and keeps the invoice-ID year consistent. |
 | A3 | `INV-<student-id>-<year>-NNNNNN` embeds the full student ID (`INV-STU-000001-2026-000001`); the counter is per student per year. | Literal reading of the ID convention. |
 | A4 | Fixed as-of date 2026-12-31 replaces "today". | Reproducibility. |
@@ -56,22 +56,25 @@ Status: **draft rules for review**. Every rule here must be implemented in
 
 Each transition is a `status_event` row.
 
-## 5. Injected anomalies (labelled in `ground_truth`)
+## 5. Injected anomalies (labelled in `ground_truth.csv`)
+
+20 of each type at full scale (at least 3 at any scale), each on a different student so no two anomalies interact.
 
 | issue_type | How it is injected | Expected decision |
 |---|---|---|
-| `ALLOCATION_EXCEEDS_PAYMENT` | One allocation sized above its payment. | Reject allocation |
-| `SCHOLARSHIP_EXCEEDS_FEES` | Award above the student's TUITION total. | Cap or revoke |
-| `DUPLICATE_INVOICE` | Second invoice for the same enrollment. | Cancel duplicate |
-| `REFUND_EXCEEDS_NET_PAID` | Refund above net paid. | Reject refund |
-| `BALANCE_LEDGER_MISMATCH` | Ledger entry altered for one student. | Investigate / re-post |
+| `ALLOCATION_EXCEEDS_PAYMENT` | The last allocation of a fully-allocated payment is raised by 500, 1,000 or 2,500, so the payment is allocated beyond its amount. Only the latest payment of a fully paid, fee-free invoice is used, so no other allocation is disturbed. | REJECT_ALLOCATION |
+| `SCHOLARSHIP_EXCEEDS_FEES` | An award is raised above the tuition of its term. | CAP_AWARD_AT_ELIGIBLE_FEES |
+| `DUPLICATE_INVOICE` | A second invoice (counter 000004) for an enrollment, with copied fee lines, a late fee and its own status history. | CANCEL_DUPLICATE_INVOICE |
+| `REFUND_EXCEEDS_NET_PAID` | A PAID OVERPAYMENT refund larger than the student's net paid (payments minus paid refunds). | REJECT_REFUND |
+| `BALANCE_LEDGER_MISMATCH` | One PAYMENT or CHARGE ledger entry is changed, so the student's ledger balance no longer matches their records. | INVESTIGATE_AND_REPOST_LEDGER |
 
-Rules: inject only after the clean baseline passes validation; touch only the labelled rows; keep `ground_truth` out of any validator input.
+Rules: inject only after the clean baseline passes validation; touch only labelled rows; keep `ground_truth` out of every validator input. The ledger is rebuilt from the altered source rows (so it stays consistent with them) before the ledger anomaly is planted.
 
-## 6. Open decisions
+## 6. Decisions
 
-- Confirm refund and late-fee percentages (section 3) before implementing.
-- Decide whether to commit the full-scale data or only the starter set plus checksums.
+- Late fee: fixed INR 500, once per invoice (chosen over a percentage).
+- Refund tiers: 100% up to day 14, 50% up to day 30, 25% up to day 45, nothing after; late claims are REJECTED.
+- Full-scale data is committed as gzip-compressed CSV (about 8 MB); the starter set is committed in CSV, JSON and SQL.
 
 ## 7. How master data is generated
 
@@ -99,3 +102,29 @@ Rules: inject only after the clean baseline passes validation; touch only the la
 - **Overpayments** are allocated up to what is owed; the rest stays unallocated (credit on account).
 - **Invoice status at the as-of date:** PAID (allocations cover the total), PARTIALLY_PAID (some but not all), OVERDUE (nothing paid, past due), CANCELLED. Because the as-of date is after every due date, ISSUED does not appear at the end, but it appears in the history.
 - **Payments** are numbered in date order (PAY-2026-NNNNNN).
+
+## 10. Refunds and the ledger
+
+- **Withdrawal refunds:** for every WITHDRAWN enrollment, one refund per payment that paid tuition: `tuition allocated x tier share`. A withdrawal after day 45 earns nothing; 60% of those students still file a claim, which is REJECTED.
+- **Cancellation refunds:** 35% of cancelled invoices were paid in full before the cancellation; the whole payment is refunded.
+- **Overpayment refunds:** the unallocated part of a payment is refunded for 60% of overpayers (the rest stays as credit on account).
+- **Refund path:** REQUESTED -> APPROVED -> PAID for 85%; 7% stay APPROVED and 8% stay REQUESTED; steps dated after the as-of date have not happened yet.
+- **Ledger:** one entry per fee/credit/waiver/late-fee line, per payment, per PAID refund, and one REVERSAL per cancelled invoice. It is built from the source tables by `ledger.py`; the validator rebuilds it independently and also compares each student's ledger total with a balance computed straight from invoices, payments and refunds (`invoice totals of non-cancelled invoices - payments + paid refunds`).
+
+## 11. Validation
+
+`validate.py` runs structure checks (columns, PK uniqueness, ID format, required, types, enums, FK), then business rules (enrollments, invoices, scholarships, waivers, payments and allocations, late fees, invoice status, refunds, ledger, lifecycle). Each problem is an `Issue(check, table, row_id)`. `anomalies.score_detection` compares issues with `ground_truth`: an anomaly is detected if its expected check fired on its row, and any issue on a row that is neither labelled nor related to a labelled row counts as unexplained (a false alarm or collateral damage).
+
+## 12. Exports and reproducibility
+
+- `tuition-synth generate` writes `csv/` (optionally `.csv.gz`), `json/`, `sql/schema.sql` + `sql/seed.sql`, `ground_truth.csv/json`, `MANIFEST.json` (command, seed, scale, per-file rows and SHA-256, provenance) and `VALIDATION_SUMMARY.md`.
+- The SQL seed loads into SQLite with foreign keys on; the schema carries PKs, FKs, UNIQUE and enum CHECK constraints.
+- `tuition-synth reproduce` generates twice into temporary folders and compares row counts and checksums. CSV and gzip bytes are reproducible: sorted output, fixed line endings, no timestamps, `mtime=0` in gzip headers, per-table random streams.
+
+## 13. Known limitations and trade-offs
+
+- All terms are in 2026 and every student is enrolled in all three, which keeps volumes exact but is simpler than a real registry.
+- Student status is ACTIVE for everyone; withdrawals are recorded on enrollments, not on the student.
+- Payments belong to one student and one invoice; there are no lump sums covering several invoices, and credit on account is not automatically applied to later invoices.
+- Scholarship awards are a random subset of eligible student-terms (limited funding), not a ranked selection; REVOKED and REVERSED states exist in the schema but are not used in the baseline.
+- The as-of date must be after the end of the grace period plus 45 days for every invoice (true for the default).

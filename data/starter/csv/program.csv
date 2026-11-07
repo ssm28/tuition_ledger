@@ -1,0 +1,21 @@
+program_id,program_code,name,level
+PRG-001,BTECH-CS,B.Tech Computer Science,UG
+PRG-002,BTECH-ME,B.Tech Mechanical Engineering,UG
+PRG-003,BTECH-EE,B.Tech Electrical Engineering,UG
+PRG-004,BTECH-CE,B.Tech Civil Engineering,UG
+PRG-005,BSC-PHY,B.Sc Physics,UG
+PRG-006,BSC-CHEM,B.Sc Chemistry,UG
+PRG-007,BSC-MATH,B.Sc Mathematics,UG
+PRG-008,BCA,Bachelor of Computer Applications,UG
+PRG-009,BBA,Bachelor of Business Administration,UG
+PRG-010,BCOM,B.Com,UG
+PRG-011,BA-ENG,B.A. English,UG
+PRG-012,BA-ECO,B.A. Economics,UG
+PRG-013,MTECH-CS,M.Tech Computer Science,PG
+PRG-014,MTECH-VLSI,M.Tech VLSI Design,PG
+PRG-015,MBA,Master of Business Administration,PG
+PRG-016,MCA,Master of Computer Applications,PG
+PRG-017,MSC-PHY,M.Sc Physics,PG
+PRG-018,MSC-DS,M.Sc Data Science,PG
+PRG-019,MA-ENG,M.A. English,PG
+PRG-020,MCOM,M.Com,PG

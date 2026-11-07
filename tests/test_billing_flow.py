@@ -123,11 +123,20 @@ def test_late_fee_is_fixed_once_per_invoice_and_only_when_money_is_still_owed():
         assert (base - allocated_by_grace[iid] > 0) == (iid in has_fee), iid
 
 
-def test_cancelled_invoices_have_no_payments_or_late_fees():
+def test_cancelled_invoices_have_no_late_fees_and_were_paid_only_before_cancellation():
     cancelled = {i["invoice_id"] for i in T["invoice"] if i["status"] == "CANCELLED"}
-    line_invoice = {ln["invoice_line_id"]: ln["invoice_id"] for ln in T["invoice_line"]}
-    assert not any(line_invoice[a["invoice_line_id"]] in cancelled for a in T["payment_allocation"])
     assert not any(ln["invoice_id"] in cancelled and ln["line_type"] == "LATE_FEE" for ln in T["invoice_line"])
+    cancelled_on = {e["entity_id"]: e["event_date"] for e in T["status_event"]
+                    if e["entity_type"] == "invoice" and e["to_status"] == "CANCELLED"}
+    pay_date = {p["payment_id"]: p["payment_date"] for p in T["payment"]}
+    line_invoice = {ln["invoice_line_id"]: ln["invoice_id"] for ln in T["invoice_line"]}
+    paid_cancelled = set()
+    for a in T["payment_allocation"]:
+        iid = line_invoice[a["invoice_line_id"]]
+        if iid in cancelled:
+            paid_cancelled.add(iid)
+            assert pay_date[a["payment_id"]] <= cancelled_on[iid]
+    assert 0.25 <= len(paid_cancelled) / len(cancelled) <= 0.45
 
 
 def test_installments_and_partial_payments_exist():

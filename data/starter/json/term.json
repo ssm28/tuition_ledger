@@ -1,0 +1,5 @@
+[
+{"term_id": "TERM-2026-SPRING", "label": "Spring 2026", "start_date": "2026-01-12", "end_date": "2026-05-15", "invoice_due_days": 30},
+{"term_id": "TERM-2026-SUMMER", "label": "Summer 2026", "start_date": "2026-06-01", "end_date": "2026-07-31", "invoice_due_days": 30},
+{"term_id": "TERM-2026-FALL", "label": "Fall 2026", "start_date": "2026-08-17", "end_date": "2026-12-18", "invoice_due_days": 30}
+]

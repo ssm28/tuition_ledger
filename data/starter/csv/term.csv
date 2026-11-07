@@ -1,0 +1,4 @@
+term_id,label,start_date,end_date,invoice_due_days
+TERM-2026-SPRING,Spring 2026,2026-01-12,2026-05-15,30
+TERM-2026-SUMMER,Summer 2026,2026-06-01,2026-07-31,30
+TERM-2026-FALL,Fall 2026,2026-08-17,2026-12-18,30

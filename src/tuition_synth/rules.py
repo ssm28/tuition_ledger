@@ -6,6 +6,7 @@ written down once. DESIGN.md describes the same rules in words.
 from __future__ import annotations
 
 from datetime import timedelta
+from decimal import Decimal
 
 from .master import money
 from .schema import FEE_TYPES
@@ -14,6 +15,10 @@ INCOME_RANK = {"LOW": 0, "MIDDLE": 1, "HIGH": 2}
 GRACE_DAYS = 15                      # days after the due date before a late fee applies
 LATE_FEE_AMOUNT = money("500")       # fixed late fee, charged once per invoice
 CHARGE_LINE_TYPES = FEE_TYPES + ("LATE_FEE",)
+
+# Withdrawal refund: share of the tuition paid, by days since term start.
+# (last day of tier, share). Later than the last tier: nothing is refunded.
+REFUND_TIERS = ((14, Decimal("1.00")), (30, Decimal("0.50")), (45, Decimal("0.25")))
 
 
 def is_eligible(student: dict, scheme: dict, on) -> bool:
@@ -69,3 +74,11 @@ def line_net_dues(lines: list) -> dict:
         if target in dues:
             dues[target] += ln["amount"]
     return dues
+
+
+def refund_share(days_since_term_start: int) -> Decimal:
+    """Share of paid tuition refunded for a withdrawal `days_since_term_start` days into the term."""
+    for last_day, share in REFUND_TIERS:
+        if days_since_term_start <= last_day:
+            return share
+    return Decimal("0.00")

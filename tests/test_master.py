@@ -148,9 +148,9 @@ def test_same_seed_gives_identical_data_and_other_seed_differs():
 def test_csv_export_is_byte_reproducible():
     with tempfile.TemporaryDirectory() as d1, tempfile.TemporaryDirectory() as d2:
         for out in (d1, d2):
-            assert main(["master", "--scale", "0.02", "--out", out]) == 0
+            assert main(["generate", "--scale", "0.02", "--out", out]) == 0
         for name in ("student", "program", "term", "fee_schedule", "eligibility"):
-            p1, p2 = Path(d1) / f"{name}.csv", Path(d2) / f"{name}.csv"
+            p1, p2 = Path(d1) / "csv" / f"{name}.csv", Path(d2) / "csv" / f"{name}.csv"
             assert sha256_of(p1) == sha256_of(p2), name
-        header = (Path(d1) / "student.csv").read_text(encoding="utf-8").splitlines()[0]
+        header = (Path(d1) / "csv" / "student.csv").read_text(encoding="utf-8").splitlines()[0]
         assert header.split(",") == TABLES["student"].field_names

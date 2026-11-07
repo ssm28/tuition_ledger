@@ -35,6 +35,7 @@ OVERPAY_EXTRAS = (200, 500, 1000, 2500, 5000)
 LATE_PAY_DAYS = (1, 45)                  # late payers pay this long after the grace period
 METHODS = ("UPI", "CARD", "NET_BANKING", "BANK_TRANSFER", "CASH")
 METHOD_WEIGHTS = (45, 15, 20, 12, 8)
+P_CANCELLED_PAID = 0.35                  # cancelled invoices that were paid in full before cancellation
 
 
 def _plan_counts(rng, payers: int, target: int) -> list:
@@ -93,7 +94,13 @@ def build_payments(cfg: Config, invoices: list, lines: list, log: EventLog):
     active = [inv for inv in invoices if inv["status"] != "CANCELLED"]
     behaviors = rng.choices(BEHAVIORS, weights=BEHAVIOR_WEIGHTS, k=len(active))
     payer_idx = [i for i, b in enumerate(behaviors) if b != "UNPAID"]
-    installments = dict(zip(payer_idx, _plan_counts(rng, len(payer_idx), cfg.volume("payments"))))
+
+    # Some cancelled invoices were paid (in full, once) before the cancellation: refund candidates.
+    rng_c = rng_for(cfg, "cancelled_payment")
+    cancelled_payers = [inv for inv in invoices
+                        if inv["status"] == "CANCELLED" and rng_c.random() < P_CANCELLED_PAID]
+    target = max(0, cfg.volume("payments") - len(cancelled_payers))
+    installments = dict(zip(payer_idx, _plan_counts(rng, len(payer_idx), target)))
 
     drafts = []        # (date, invoice_id, part, student_id, amount)
     base_net = {}      # invoice_id -> amount due before any late fee
@@ -134,6 +141,13 @@ def build_payments(cfg: Config, invoices: list, lines: list, log: EventLog):
             dates = _dates(rng, issue, due, k - 1) + [late_day]
         for part, (when, amount) in enumerate(zip(dates, amounts), start=1):
             drafts.append((when, iid, part, inv["student_id"], amount))
+
+    for inv in cancelled_payers:
+        iid = inv["invoice_id"]
+        cancelled_on = log.date_of("invoice", iid, "CANCELLED")
+        when = inv["issue_date"] + timedelta(days=rng_c.randint(0, (cancelled_on - inv["issue_date"]).days))
+        net = sum((ln["amount"] for ln in lines_by_inv[iid]), Decimal(0))
+        drafts.append((when, iid, 1, inv["student_id"], net))
 
     # --- number payments in date order
     drafts.sort(key=lambda d: d[:3])

@@ -1,0 +1,129 @@
+{
+  "project": "tuition-ledger-synth",
+  "version": "0.1.0",
+  "command": "tuition-synth generate --seed 20261022 --scale 1.0 --formats csv --gzip",
+  "seed": 20261022,
+  "scale": 1.0,
+  "as_of": "2026-12-31",
+  "python": "3.12.3",
+  "anomalies_injected": 100,
+  "source": {
+    "type": "fully synthetic",
+    "external_data_used": false,
+    "note": "No public or personal data was used; names are fabricated, emails use example.edu."
+  },
+  "files": [
+    {
+      "path": "csv/term.csv.gz",
+      "table": "term",
+      "rows": 3,
+      "sha256": "7b2e6ca7983a4517e10c79fb017a678f9314b76d9621ac7e40e8b668824ee66c",
+      "bytes": 156
+    },
+    {
+      "path": "csv/program.csv.gz",
+      "table": "program",
+      "rows": 20,
+      "sha256": "45c53701c66c1ed087cea8b8e845e1f974465129af93f5ce1c0ac29460ba153e",
+      "bytes": 370
+    },
+    {
+      "path": "csv/student.csv.gz",
+      "table": "student",
+      "rows": 10000,
+      "sha256": "8a522d42b4550227ca058ed088c6af0fa8000735e0624f3705a5db75c21784d7",
+      "bytes": 215966
+    },
+    {
+      "path": "csv/fee_schedule.csv.gz",
+      "table": "fee_schedule",
+      "rows": 276,
+      "sha256": "97f79070d8ac353f01c381572f1f7972cea2f4865bb391789d5e3a74dea91b7a",
+      "bytes": 2005
+    },
+    {
+      "path": "csv/enrollment.csv.gz",
+      "table": "enrollment",
+      "rows": 30000,
+      "sha256": "dd8a6be557cfa9b1e9a03cdcecb8d830a4a19268f768c680c1eacca0c815ff66",
+      "bytes": 222053
+    },
+    {
+      "path": "csv/eligibility.csv.gz",
+      "table": "eligibility",
+      "rows": 8,
+      "sha256": "8adda069806d3d7f48e0ebe61e69d763c46bbcda3dc5eeed2ec53908c3fbc319",
+      "bytes": 361
+    },
+    {
+      "path": "csv/invoice.csv.gz",
+      "table": "invoice",
+      "rows": 30020,
+      "sha256": "27e0c3956cf5117af608d15c0758d6e9f352825a530ea2088b28162a0e46c912",
+      "bytes": 324315
+    },
+    {
+      "path": "csv/scholarship.csv.gz",
+      "table": "scholarship",
+      "rows": 15000,
+      "sha256": "fd00b15d6e278bb5fe90f953304472bc0431236c8411180a5203c18f1ec88882",
+      "bytes": 121970
+    },
+    {
+      "path": "csv/invoice_line.csv.gz",
+      "table": "invoice_line",
+      "rows": 160809,
+      "sha256": "65b20c659fc60e39134cfaf89cecc4283affd363222db504ceadaf9be32f1ca7",
+      "bytes": 1413923
+    },
+    {
+      "path": "csv/payment.csv.gz",
+      "table": "payment",
+      "rows": 50000,
+      "sha256": "3e360e3976ba2e8eacdb63fb4bf9fa41848bb0babce2d2bc4925341a8e52ce1c",
+      "bytes": 698442
+    },
+    {
+      "path": "csv/payment_allocation.csv.gz",
+      "table": "payment_allocation",
+      "rows": 146496,
+      "sha256": "ef322dc28e4fedf9f0f2ea54e259a6a22c5c0a70ec8d3e0477a3633e5f75590f",
+      "bytes": 1249777
+    },
+    {
+      "path": "csv/refund.csv.gz",
+      "table": "refund",
+      "rows": 3000,
+      "sha256": "d966abc259a6016f76e5d81913a994f21b316de299d721dc7dc68b6e8ffb8210",
+      "bytes": 48013
+    },
+    {
+      "path": "csv/ledger_entry.csv.gz",
+      "table": "ledger_entry",
+      "rows": 213768,
+      "sha256": "bc0a1d54743ea1a4a4a0d0bc3fdc1534e8178b9596656786e3f90e503e5103bd",
+      "bytes": 2713838
+    },
+    {
+      "path": "csv/status_event.csv.gz",
+      "table": "status_event",
+      "rows": 223383,
+      "sha256": "4f9526683d56132154dd56030edabd9fbe88dc7a2c43e7592116c1765052fc66",
+      "bytes": 1351372
+    },
+    {
+      "path": "ground_truth.csv",
+      "table": "ground_truth",
+      "rows": 100,
+      "sha256": "3454a089888df3874311fa6e97438ef01143255db4de222a281ba64d3e71bab4",
+      "bytes": 17618
+    },
+    {
+      "path": "ground_truth.json",
+      "table": "ground_truth",
+      "rows": 100,
+      "sha256": "49180b361833cce6da03f3006ce3b7e5abb2a6a72901654b9edd055da0cb6514",
+      "bytes": 31333
+    }
+  ]
+}

@@ -1,0 +1,241 @@
+{
+  "project": "tuition-ledger-synth",
+  "version": "0.1.0",
+  "command": "tuition-synth generate --seed 20261022 --scale 0.02 --formats csv,json,sql",
+  "seed": 20261022,
+  "scale": 0.02,
+  "as_of": "2026-12-31",
+  "python": "3.12.3",
+  "anomalies_injected": 15,
+  "source": {
+    "type": "fully synthetic",
+    "external_data_used": false,
+    "note": "No public or personal data was used; names are fabricated, emails use example.edu."
+  },
+  "files": [
+    {
+      "path": "csv/term.csv",
+      "table": "term",
+      "rows": 3,
+      "sha256": "7b2e6ca7983a4517e10c79fb017a678f9314b76d9621ac7e40e8b668824ee66c",
+      "bytes": 209
+    },
+    {
+      "path": "json/term.json",
+      "table": "term",
+      "rows": 3,
+      "sha256": "e9152c14e655f49c8e40d1a6b8fb01b2d77d0b7ee39070793a9f33eba24492be",
+      "bytes": 404
+    },
+    {
+      "path": "csv/program.csv",
+      "table": "program",
+      "rows": 20,
+      "sha256": "45c53701c66c1ed087cea8b8e845e1f974465129af93f5ce1c0ac29460ba153e",
+      "bytes": 816
+    },
+    {
+      "path": "json/program.json",
+      "table": "program",
+      "rows": 20,
+      "sha256": "222508f18d44af7bd18b64afd6e0705445528b5f25bfd53b3eab52bae4eeb727",
+      "bytes": 2004
+    },
+    {
+      "path": "csv/student.csv",
+      "table": "student",
+      "rows": 200,
+      "sha256": "745835c6755a0bb60d17dc39f54b950da578bbe719914b4b21d76a1207575ce5",
+      "bytes": 20813
+    },
+    {
+      "path": "json/student.json",
+      "table": "student",
+      "rows": 200,
+      "sha256": "be20fc6ee9c53c9859585357e9497bf3a6496da6ba335a9392361ed42148028d",
+      "bytes": 51518
+    },
+    {
+      "path": "csv/fee_schedule.csv",
+      "table": "fee_schedule",
+      "rows": 276,
+      "sha256": "97f79070d8ac353f01c381572f1f7972cea2f4865bb391789d5e3a74dea91b7a",
+      "bytes": 22120
+    },
+    {
+      "path": "json/fee_schedule.json",
+      "table": "fee_schedule",
+      "rows": 276,
+      "sha256": "4ad9dbf3d849e6b9e159b44e5a9c4cc488e85930b25884ef1db1e40ae515d3e8",
+      "bytes": 59573
+    },
+    {
+      "path": "csv/enrollment.csv",
+      "table": "enrollment",
+      "rows": 600,
+      "sha256": "b0f2bf39edde81e3a3770a0566080e8d564b9f1b39c3825e7cf95455e70228ea",
+      "bytes": 41306
+    },
+    {
+      "path": "json/enrollment.json",
+      "table": "enrollment",
+      "rows": 600,
+      "sha256": "25bb12468399be5b539a8a545b781dab85979b8c58e63bb0f363d4a2cdf44fdc",
+      "bytes": 114387
+    },
+    {
+      "path": "csv/eligibility.csv",
+      "table": "eligibility",
+      "rows": 8,
+      "sha256": "8adda069806d3d7f48e0ebe61e69d763c46bbcda3dc5eeed2ec53908c3fbc319",
+      "bytes": 770
+    },
+    {
+      "path": "json/eligibility.json",
+      "table": "eligibility",
+      "rows": 8,
+      "sha256": "193a347fa18b92f2cd2094d08d4866e9fba1a6f4704cae65d6c35c5d42ba6ccc",
+      "bytes": 2175
+    },
+    {
+      "path": "csv/invoice.csv",
+      "table": "invoice",
+      "rows": 603,
+      "sha256": "d28876792150e119b6428621862d7f9a886b9e8c4545fcbbb4041a4098184363",
+      "bytes": 64335
+    },
+    {
+      "path": "json/invoice.json",
+      "table": "invoice",
+      "rows": 603,
+      "sha256": "261f8687dc2b800fe807bc61a34504231265488008305be222c55051dff55467",
+      "bytes": 154092
+    },
+    {
+      "path": "csv/scholarship.csv",
+      "table": "scholarship",
+      "rows": 300,
+      "sha256": "0db4b3b343c9f4d91e64d3e2c1172b3cd6375e0c1cea28edb9b43f022142c80e",
+      "bytes": 23752
+    },
+    {
+      "path": "json/scholarship.json",
+      "table": "scholarship",
+      "rows": 300,
+      "sha256": "48b94c6e315a73a9edcd1f0849de7b151bd7c28f56bc31ae1649957aeff7438d",
+      "bytes": 60875
+    },
+    {
+      "path": "csv/invoice_line.csv",
+      "table": "invoice_line",
+      "rows": 3226,
+      "sha256": "acfda4c422ad799fff17738ebeee756be62a07d05df395af266ecec71b6585ba",
+      "bytes": 410925
+    },
+    {
+      "path": "json/invoice_line.json",
+      "table": "invoice_line",
+      "rows": 3226,
+      "sha256": "ce7ed02bb3e789ba0c27df12a60b24b71cb9db0d83b3a8b9a55d47f2c0c2d9f4",
+      "bytes": 891761
+    },
+    {
+      "path": "csv/payment.csv",
+      "table": "payment",
+      "rows": 1000,
+      "sha256": "bb2ce3218116a4220a506bf9bd900552c33002615f0b62b69464e4d84e05fb35",
+      "bytes": 76965
+    },
+    {
+      "path": "json/payment.json",
+      "table": "payment",
+      "rows": 1000,
+      "sha256": "7505eee920798796f949e1dc04bb22b0cadaa5cb4d89d56a43b750281e4c7d13",
+      "bytes": 186902
+    },
+    {
+      "path": "csv/payment_allocation.csv",
+      "table": "payment_allocation",
+      "rows": 2923,
+      "sha256": "70850a265846a3f55d813abc3d307d4c23fdf6471d9649931047521c162fcb46",
+      "bytes": 278149
+    },
+    {
+      "path": "json/payment_allocation.json",
+      "table": "payment_allocation",
+      "rows": 2923,
+      "sha256": "fadc9b880a894295021e837eb23646c2e5045f7d91114e666767d6ece01d25a6",
+      "bytes": 549930
+    },
+    {
+      "path": "csv/refund.csv",
+      "table": "refund",
+      "rows": 55,
+      "sha256": "336ea4ff0cf90e0a7f9b35857502dc03959b7184322da74b17bbe2e3bbd6b515",
+      "bytes": 5464
+    },
+    {
+      "path": "json/refund.json",
+      "table": "refund",
+      "rows": 55,
+      "sha256": "386d6e7652669e1f408e175d832026c4b3aeb84f719f628ab3165ebfb5ff2398",
+      "bytes": 13607
+    },
+    {
+      "path": "csv/ledger_entry.csv",
+      "table": "ledger_entry",
+      "rows": 4285,
+      "sha256": "e1e8a2cd6fde6cdda6beb21052b5f95caf0e0aeb9be2e1573c9c997ef1e94944",
+      "bytes": 422416
+    },
+    {
+      "path": "json/ledger_entry.json",
+      "table": "ledger_entry",
+      "rows": 4285,
+      "sha256": "fe4d0d8173f2594e0d93094b6fe3ac3f7bf6daec14413b37a2325a4abfc70064",
+      "bytes": 1009375
+    },
+    {
+      "path": "csv/status_event.csv",
+      "table": "status_event",
+      "rows": 4457,
+      "sha256": "f534878732e7d5b9cc3256a661513844acc8012a3d8983e0ed5c95ee1d4d771e",
+      "bytes": 286514
+    },
+    {
+      "path": "json/status_event.json",
+      "table": "status_event",
+      "rows": 4457,
+      "sha256": "dcfe612f8646d6b6a4cc37683e283731c3f0e5e51fe5e591d5714e0fc99c3e48",
+      "bytes": 746183
+    },
+    {
+      "path": "ground_truth.csv",
+      "table": "ground_truth",
+      "rows": 15,
+      "sha256": "892001c2e4216fe92b373636b3afc768ed62e078f4ae6d6bd0ea999dc7db0d2b",
+      "bytes": 2713
+    },
+    {
+      "path": "ground_truth.json",
+      "table": "ground_truth",
+      "rows": 15,
+      "sha256": "cf29d4473ad633c9d15ca659ab643b4387d82041ed1b867111f087270c3ebb98",
+      "bytes": 4698
+    },
+    {
+      "path": "sql/schema.sql",
+      "table": "schema",
+      "rows": 0,
+      "sha256": "86423a4ecd829a26e677c6797605a15e3c6c01af59597ed6e043e7b3f2438395",
+      "bytes": 5887
+    },
+    {
+      "path": "sql/seed.sql",
+      "table": "seed",
+      "rows": 17956,
+      "sha256": "081a69e0ded843ef623c9191d552f0bcc882419f635f2fcce6bf963f1170fbcd",
+      "bytes": 2047914
+    }
+  ]
+}

@@ -13,8 +13,10 @@ from decimal import Decimal
 
 from . import ids
 from .config import AS_OF_DATE
+from .ledger import build_ledger
+from .master import money
 from .rules import (
-    LATE_FEE_AMOUNT, award_amount, grace_end, is_eligible, late_fee_date, line_net_dues,
+    LATE_FEE_AMOUNT, award_amount, grace_end, is_eligible, late_fee_date, line_net_dues, refund_share,
 )
 from .schema import LIFECYCLES, TABLES
 
@@ -198,7 +200,11 @@ def check_scholarships(tables: dict) -> list[Issue]:
         sid = sch["scholarship_id"]
         per_term[(sch["student_id"], sch["term_id"])].append(sid)
         scheme, student = schemes.get(sch["eligibility_id"]), students.get(sch["student_id"])
-        inv = active_invoice.get((sch["student_id"], sch["term_id"]))
+        credit = credits.get(sid, [])
+        # the invoice that carries this award's credit line; otherwise the student's active invoice for the term
+        inv = invoices.get(credit[0]["invoice_id"]) if len(credit) == 1 else None
+        if inv is None:
+            inv = active_invoice.get((sch["student_id"], sch["term_id"]))
         if scheme and student and not is_eligible(student, scheme, sch["awarded_on"]):
             issues.append(Issue("scholarship_not_eligible", "scholarship", sid))
         if scheme and sch["award_amount"] > scheme["max_award_amount"]:
@@ -213,12 +219,12 @@ def check_scholarships(tables: dict) -> list[Issue]:
             if scheme and sch["award_amount"] != award_amount(scheme, fees) \
                     and sch["award_amount"] <= min(fees, scheme["max_award_amount"]):
                 issues.append(Issue("scholarship_amount_mismatch", "scholarship", sid))
-        credit = credits.get(sid, [])
         if len(credit) != 1:
             issues.append(Issue("scholarship_credit_line", "scholarship", sid, f"{len(credit)} credit lines"))
         elif credit[0]["amount"] != -sch["award_amount"]:
             issues.append(Issue("scholarship_credit_mismatch", "scholarship", sid))
-        elif inv is not None and credit[0]["invoice_id"] != inv["invoice_id"]:
+        elif inv is not None and (inv["student_id"] != sch["student_id"] or inv["term_id"] != sch["term_id"]
+                                  or inv["status"] == "CANCELLED"):
             issues.append(Issue("scholarship_credit_wrong_invoice", "scholarship", sid))
     for sids in per_term.values():
         for dup in sorted(sids)[1:]:
@@ -329,7 +335,137 @@ def check_late_fees_and_status(tables: dict, as_of=AS_OF_DATE) -> list[Issue]:
     return issues
 
 
+# --------------------------------------------------------------------- refunds
+def check_refunds(tables: dict) -> list[Issue]:
+    """Refund amounts follow their reason's rule and never exceed what the student paid."""
+    issues: list[Issue] = []
+    payments = {p["payment_id"]: p for p in tables.get("payment", [])}
+    enrollments = {e["enrollment_id"]: e for e in tables.get("enrollment", [])}
+    terms = {t["term_id"]: t for t in tables.get("term", [])}
+    line_type = {ln["invoice_line_id"]: ln["line_type"] for ln in tables.get("invoice_line", [])}
+
+    allocated, tuition = defaultdict(Decimal), defaultdict(Decimal)
+    for a in tables.get("payment_allocation", []):
+        allocated[a["payment_id"]] += a["amount"]
+        if line_type.get(a["invoice_line_id"]) == "TUITION":
+            tuition[a["payment_id"]] += a["amount"]
+    total_paid = defaultdict(Decimal)
+    for p in payments.values():
+        if p["status"] == "POSTED":
+            total_paid[p["student_id"]] += p["amount"]
+
+    refunded_cash = defaultdict(Decimal)     # per student, PAID refunds so far (in id order)
+    refunded_on_payment = defaultdict(Decimal)
+    for r in sorted(tables.get("refund", []), key=lambda r: r["refund_id"]):
+        rid, pay = r["refund_id"], payments.get(r["payment_id"])
+        if r["amount"] <= 0:
+            issues.append(Issue("refund_amount", "refund", rid))
+        if pay is not None:
+            if pay["student_id"] != r["student_id"]:
+                issues.append(Issue("refund_student_mismatch", "refund", rid))
+            if r["requested_on"] < pay["payment_date"]:
+                issues.append(Issue("refund_dates", "refund", rid, "requested before the payment"))
+            if r["status"] != "REJECTED":
+                refunded_on_payment[pay["payment_id"]] += r["amount"]
+                if refunded_on_payment[pay["payment_id"]] > pay["amount"]:
+                    issues.append(Issue("refund_exceeds_payment", "refund", rid))
+        if r["status"] == "PAID":
+            refunded_cash[r["student_id"]] += r["amount"]
+            if refunded_cash[r["student_id"]] > total_paid[r["student_id"]]:
+                issues.append(Issue("refund_exceeds_net_paid", "refund", rid,
+                                    f"refunded {refunded_cash[r['student_id']]} vs paid {total_paid[r['student_id']]}"))
+        if (r["status"] in ("PAID", "REJECTED")) != (r["processed_on"] is not None):
+            issues.append(Issue("refund_processed_on", "refund", rid))
+        if r["processed_on"] is not None and r["processed_on"] < r["requested_on"]:
+            issues.append(Issue("refund_dates", "refund", rid, "processed before requested"))
+
+        enr = enrollments.get(r["enrollment_id"]) if r["enrollment_id"] else None
+        if r["reason"] == "WITHDRAWAL":
+            if enr is None or enr["status"] != "WITHDRAWN" or enr["student_id"] != r["student_id"]:
+                issues.append(Issue("refund_enrollment", "refund", rid, "needs the student's WITHDRAWN enrollment"))
+            elif enr["withdrawn_on"] is not None and enr["term_id"] in terms:
+                share = refund_share((enr["withdrawn_on"] - terms[enr["term_id"]]["start_date"]).days)
+                if r["status"] == "REJECTED":
+                    if share != 0:
+                        issues.append(Issue("refund_rejected_but_eligible", "refund", rid))
+                elif r["amount"] != money(tuition[r["payment_id"]] * share):
+                    issues.append(Issue("withdrawal_refund_amount", "refund", rid,
+                                        f"{r['amount']} vs expected {money(tuition[r['payment_id']] * share)}"))
+        elif r["reason"] == "CANCELLATION":
+            if enr is None or enr["status"] != "CANCELLED" or enr["student_id"] != r["student_id"]:
+                issues.append(Issue("refund_enrollment", "refund", rid, "needs the student's CANCELLED enrollment"))
+            elif r["amount"] != allocated[r["payment_id"]]:
+                issues.append(Issue("cancellation_refund_amount", "refund", rid))
+        elif r["reason"] == "OVERPAYMENT" and pay is not None:
+            if r["amount"] > pay["amount"] - allocated[pay["payment_id"]]:
+                issues.append(Issue("refund_overpayment_amount", "refund", rid,
+                                    "more than the unallocated part of the payment"))
+    return issues
+
+
+# ---------------------------------------------------------------------- ledger
+def expected_balances(tables: dict) -> dict:
+    """Balance owed per student, worked out directly from invoices, payments and refunds."""
+    bal: dict = defaultdict(Decimal)
+    for inv in tables.get("invoice", []):
+        if inv["status"] != "CANCELLED":
+            bal[inv["student_id"]] += inv["total_amount"]
+    for p in tables.get("payment", []):
+        if p["status"] == "POSTED":
+            bal[p["student_id"]] -= p["amount"]
+    for r in tables.get("refund", []):
+        if r["status"] == "PAID":
+            bal[r["student_id"]] += r["amount"]
+    return bal
+
+
+def check_ledger(tables: dict) -> list[Issue]:
+    """The ledger matches what the source rows imply, in order, and balances agree."""
+    ledger = tables.get("ledger_entry")
+    if ledger is None:
+        return []
+    issues: list[Issue] = []
+    expected = {(e["source_table"], e["source_id"], e["entry_type"]): e for e in build_ledger(tables)}
+    actual: dict = {}
+    for row in ledger:
+        key = (row["source_table"], row["source_id"], row["entry_type"])
+        if key in actual:
+            issues.append(Issue("ledger_duplicate", "ledger_entry", row["ledger_entry_id"]))
+        actual[key] = row
+        exp = expected.get(key)
+        if exp is None:
+            issues.append(Issue("ledger_extra", "ledger_entry", row["ledger_entry_id"]))
+            continue
+        if row["amount"] != exp["amount"]:
+            issues.append(Issue("ledger_amount_mismatch", "ledger_entry", row["ledger_entry_id"],
+                                f"{row['amount']} vs expected {exp['amount']}"))
+        if row["entry_date"] != exp["entry_date"] or row["student_id"] != exp["student_id"]:
+            issues.append(Issue("ledger_date_or_student", "ledger_entry", row["ledger_entry_id"]))
+    for key in expected:
+        if key not in actual:
+            issues.append(Issue("ledger_missing", "ledger_entry", f"{key[0]}:{key[1]}"))
+
+    previous_seq, previous_date = 0, None
+    for row in sorted(ledger, key=lambda r: r["event_seq"]):
+        if row["event_seq"] != previous_seq + 1 or row["ledger_entry_id"] != ids.ledger_entry_id(row["event_seq"]):
+            issues.append(Issue("ledger_sequence", "ledger_entry", row["ledger_entry_id"]))
+        if previous_date is not None and row["entry_date"] < previous_date:
+            issues.append(Issue("ledger_sequence", "ledger_entry", row["ledger_entry_id"], "date goes backwards"))
+        previous_seq, previous_date = row["event_seq"], row["entry_date"]
+
+    from_ledger: dict = defaultdict(Decimal)
+    for row in ledger:
+        from_ledger[row["student_id"]] += row["amount"]
+    direct = expected_balances(tables)
+    for student in sorted(set(from_ledger) | set(direct)):
+        if from_ledger[student] != direct[student]:
+            issues.append(Issue("balance_ledger_mismatch", "student", student,
+                                f"ledger {from_ledger[student]} vs records {direct[student]}"))
+    return issues
+
+
 def run_all(tables: dict, as_of=AS_OF_DATE) -> list[Issue]:
     return (check_structure(tables) + check_enrollments(tables) + check_invoices(tables)
             + check_scholarships(tables) + check_payments(tables)
-            + check_late_fees_and_status(tables, as_of) + check_lifecycle(tables))
+            + check_late_fees_and_status(tables, as_of) + check_refunds(tables)
+            + check_ledger(tables) + check_lifecycle(tables))

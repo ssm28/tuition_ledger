@@ -1,55 +1,110 @@
 # tuition-ledger-synth
 
-Deterministic synthetic data generator and validator for a tuition, scholarship,
-payment and balance-reconciliation workflow. Fixed seed `20261022`, parameterized scale.
+A deterministic synthetic-data generator and validator for a university **tuition, scholarship, payment and
+balance-reconciliation** workflow: fee schedules, enrollments, invoices, scholarship eligibility, payment
+allocation, late fees, withdrawals and refunds, and a student ledger. It plants five labelled kinds of data
+errors, then checks that an independent validator finds them.
 
-> **Status:** master tables, enrollments, invoices, scholarships, waivers, payments, allocations,
-> late fees and status history are generated, validated and tested. Refunds, the ledger, anomaly
-> injection and the final exports are being added next; this README is updated as each lands.
+Everything is fully synthetic (fixed seed `20261022`, no external data) and reproducible byte for byte.
+
+## Results at a glance (full scale)
+
+| | |
+|---|---|
+| Students / programs / terms | 10,000 / 20 / 3 |
+| Invoices | 30,000 (plus 20 injected duplicates) |
+| Scholarship awards | 15,000 |
+| Payments | 50,000 (partial, installments, overpayments, late) |
+| Refunds | 3,000 (withdrawal, cancellation, overpayment; paid, pending, rejected) |
+| Ledger entries | 213,768 |
+| Clean-baseline validation issues | **0** |
+| Injected anomalies found by the validator | **100 / 100**, 0 unexplained issues |
+| Reproducibility (two runs, same seed) | **identical** checksums for every file |
+
+Details: [`reports/validation_summary_full.md`](reports/validation_summary_full.md),
+[`reports/reproducibility_full.md`](reports/reproducibility_full.md).
 
 ## Quick start
 
 ```bash
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
-pytest
-tuition-synth docs        # regenerate docs/data_dictionary.md from the schema
+pytest                                                  # 109 tests, about a minute
 
-# generate the master tables as CSV (scale 1.0 = full volume; 0.02 = small starter)
-tuition-synth master --scale 0.02 --out out/
+# small starter dataset in all formats (what is committed in data/starter)
+tuition-synth generate --seed 20261022 --scale 0.02 --formats csv,json,sql --out out/starter
 
-# generate everything built so far, run the validator, write CSVs
-tuition-synth generate --scale 0.02 --out out/
+# full dataset, compressed CSV (what is committed in data/full)
+tuition-synth generate --seed 20261022 --scale 1.0 --formats csv --gzip --out out/full
+
+# prove reproducibility: generate twice and compare every file
+tuition-synth reproduce --scale 1.0 --report reports/reproducibility_full.md
 ```
 
-Both commands print a short SHA-256 per file. Running it twice with the same seed and scale prints identical values.
+The generator command, seed and scale used for every committed dataset are recorded in its `MANIFEST.json`.
+`--no-anomalies` writes the clean baseline only. `--scale` shrinks or grows all volumes (programs stay at 20).
+
+## What a dataset folder contains
+
+| Path | Contents |
+|---|---|
+| `csv/<table>.csv` (or `.csv.gz`) | One file per table, columns in schema order |
+| `json/<table>.json`, `sql/schema.sql`, `sql/seed.sql` | Same data as JSON and as SQLite-ready SQL (when requested) |
+| `ground_truth.csv` / `.json` | The injected anomalies: type, row, student, related rows, expected decision. Never an input to the validator |
+| `MANIFEST.json` | Command, seed, scale, provenance, and row count + SHA-256 for every file |
+| `VALIDATION_SUMMARY.md` | Row counts, baseline result, check families, detection scores |
+
+Committed datasets: [`data/starter`](data/starter) (scale 0.02: CSV, JSON, SQL) and
+[`data/full`](data/full) (scale 1.0: gzip CSV).
+
+## How it works
+
+```
+master data      term, program, student, fee_schedule, eligibility
+   |
+enrollments -> invoices + fee lines            (outcomes: cancelled / withdrawn / completed)
+   |
+scholarships (negative credit lines) + fee waivers
+   |
+payments -> allocations to invoice lines -> late fees -> invoice status
+   |
+refunds (withdrawal tiers, cancellation, overpayment) -> student ledger
+   |
+VALIDATE the clean baseline (must be 0 issues)
+   |
+inject 5 labelled anomalies -> ground_truth     (the ledger anomaly is planted last)
+   |
+VALIDATE again and score against ground_truth -> export -> manifest + summary
+```
+
+Every derived number (invoice totals, net dues, balances, statuses, refund amounts, ledger) is computed from
+source records by the rules in [`rules.py`](src/tuition_synth/rules.py), never drawn independently.
+Every status change is stored as a `status_event` row, so history is never overwritten.
+
+Documents: [`DESIGN.md`](DESIGN.md) (assumptions, rules, lifecycles, anomaly plan, limitations),
+[`docs/data_dictionary.md`](docs/data_dictionary.md) (every field: type, required, allowed values, unit,
+uniqueness, rule; generated from the schema).
+
+## The five injected anomalies
+
+`ALLOCATION_EXCEEDS_PAYMENT`, `SCHOLARSHIP_EXCEEDS_FEES`, `DUPLICATE_INVOICE`, `REFUND_EXCEEDS_NET_PAID`,
+`BALANCE_LEDGER_MISMATCH`: 20 each at full scale, each on its own student. The validator finds all of them and
+raises no issue on any unlabelled row (checked in `tests/test_anomalies.py`).
 
 ## Project layout
 
 | Path | Purpose |
 |---|---|
-| `src/tuition_synth/config.py` | Seed, scale, fixed as-of date, terms, base volumes |
-| `src/tuition_synth/ids.py` | Deterministic ID builders and format checks |
-| `src/tuition_synth/schema.py` | Single source of truth for tables, fields, enums, keys |
-| `src/tuition_synth/reference_data.py` | Program catalog, fee amounts, scholarship schemes, name lists |
-| `src/tuition_synth/master.py` | Generators for the master tables |
-| `src/tuition_synth/transactions.py` | Enrollments, invoices, invoice lines |
-| `src/tuition_synth/rules.py` | Business rules as pure functions (eligibility, awards, late fee, net dues) |
-| `src/tuition_synth/scholarships.py` | Scholarship awards and fee waivers |
-| `src/tuition_synth/payments.py` | Payments, allocations, late fees, derived invoice status |
-| `src/tuition_synth/pipeline.py` | Runs every generator in dependency order |
-| `src/tuition_synth/events.py` | Status-history log (every state change is a row) |
-| `src/tuition_synth/validate.py` | Validator: structure, arithmetic, duplicates, lifecycle |
-| `src/tuition_synth/export.py` | Stable-format CSV writer and checksums |
-| `src/tuition_synth/docs.py` | Renders the data dictionary from the schema |
-| `docs/data_dictionary.md` | Generated field-level dictionary |
-| `DESIGN.md` | Assumptions, business rules, lifecycles, anomaly plan |
-| `tests/` | Unit tests |
+| `src/tuition_synth/config.py` | Seed, scale, fixed as-of date, terms, volumes |
+| `ids.py`, `schema.py`, `docs.py` | ID conventions; single source of truth for tables and fields; data dictionary |
+| `reference_data.py`, `master.py` | Program catalog, prices, scholarship schemes; master-table generators |
+| `transactions.py`, `scholarships.py`, `payments.py`, `refunds.py`, `ledger.py` | Transaction generators |
+| `rules.py` | Business rules as pure functions (eligibility, awards, late fee, net dues, refund tiers) |
+| `pipeline.py`, `anomalies.py`, `validate.py` | Orchestration, anomaly injection and scoring, validator |
+| `export.py`, `ddl.py`, `report.py`, `dataset.py`, `cli.py` | Exports, SQL, summary, command line |
+| `tests/` | 109 tests: rules, generators, validator (by breaking data on purpose), anomalies, exports, reproducibility |
 
-## Provenance
+## Provenance and licence
 
-All data is synthetic. No external or personal data is used.
-
-## License
-
-MIT
+All data is synthetic. No public, personal or confidential data was used or collected (names are fabricated
+combinations; e-mail addresses use `example.edu`). Released under the MIT licence.
