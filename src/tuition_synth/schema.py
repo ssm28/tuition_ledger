@@ -186,7 +186,7 @@ INVOICE_LINE = Table(
         Field("invoice_id", "string", fk="invoice.invoice_id"),
         Field("line_type", "string", allowed=LINE_TYPES),
         Field("fee_schedule_id", "string", required=False, fk="fee_schedule.fee_schedule_id",
-              rule="Required for fee lines; empty for LATE_FEE / credits"),
+              rule="Required for fee lines and WAIVER lines (the fee being waived); empty for LATE_FEE / SCHOLARSHIP_CREDIT"),
         Field("scholarship_id", "string", required=False, fk="scholarship.scholarship_id",
               rule="Required iff line_type = SCHOLARSHIP_CREDIT"),
         Field("description", "string"),

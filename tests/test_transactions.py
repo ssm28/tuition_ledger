@@ -4,7 +4,7 @@ from decimal import Decimal
 from tuition_synth import ids
 from tuition_synth.config import Config
 from tuition_synth.transactions import build_core, recompute_invoice_totals
-from tuition_synth.validate import run_all
+from tuition_synth.validate import check_enrollments, check_invoices, check_lifecycle, check_structure
 
 CORE = build_core(Config(scale=1.0))
 ENR, INV, LINES = CORE["enrollment"], CORE["invoice"], CORE["invoice_line"]
@@ -23,7 +23,8 @@ def test_one_enrollment_per_student_per_term_and_one_invoice_each():
 
 
 def test_clean_baseline_has_zero_validation_issues():
-    assert run_all(CORE) == []
+    issues = (check_structure(CORE) + check_enrollments(CORE) + check_invoices(CORE) + check_lifecycle(CORE))
+    assert issues == []
 
 
 def test_invoice_ids_are_per_student_sequential():

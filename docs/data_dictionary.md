@@ -199,7 +199,7 @@ One charge or credit on an invoice. Signed: charges > 0, credits < 0.
 | `invoice_line_id` | string | yes | yes |  |  | LINE-<invoice-id>-NN |
 | `invoice_id` | string | yes |  |  |  |  |
 | `line_type` | string | yes |  | TUITION, LAB, LIBRARY, TECHNOLOGY, ACTIVITY, LATE_FEE, SCHOLARSHIP_CREDIT, WAIVER |  |  |
-| `fee_schedule_id` | string | no |  |  |  | Required for fee lines; empty for LATE_FEE / credits |
+| `fee_schedule_id` | string | no |  |  |  | Required for fee lines and WAIVER lines (the fee being waived); empty for LATE_FEE / SCHOLARSHIP_CREDIT |
 | `scholarship_id` | string | no |  |  |  | Required iff line_type = SCHOLARSHIP_CREDIT |
 | `description` | string | yes |  |  |  |  |
 | `amount` | decimal | yes |  |  | INR | Charges > 0; SCHOLARSHIP_CREDIT and WAIVER < 0 |

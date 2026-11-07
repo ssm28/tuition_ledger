@@ -34,11 +34,11 @@ Status: **draft rules for review**. Every rule here must be implemented in
 
 **Scholarships.** A student qualifies if `cgpa >= min_cgpa`, income band is at or below `max_income_band` (if set), the program matches (if set), and the award date is inside the effective window. Award = percent of TUITION lines, or a fixed amount, capped by `max_award_amount` **and never more than eligible fees (TUITION lines)**. Applied as a negative SCHOLARSHIP_CREDIT line.
 
-**Fee waivers.** Negative WAIVER line, only on non-tuition fee lines in the baseline.
+**Fee waivers.** Negative WAIVER line that points (via `fee_schedule_id`) at the non-tuition fee line it waives, for the full fee; about 3% of invoices.
 
-**Payments and allocation.** A payment is allocated to open invoice lines, oldest due first. Allocation to a line never exceeds the line's outstanding amount, and the allocations of a payment never exceed the payment. Partial payment leaves the invoice PARTIALLY_PAID. Any unallocated remainder is an overpayment, held as credit on account.
+**Payments and allocation.** A payment (always for one student, one invoice) is allocated to that invoice's charge lines in line order, each up to the line's *net due* (the line amount minus the scholarship credit or waiver that targets it). Allocation to a line never exceeds the line's outstanding amount, and the allocations of a payment never exceed the payment. Partial payment leaves the invoice PARTIALLY_PAID. Any unallocated remainder is an overpayment, held as credit on account.
 
-**Late fees.** If an invoice has an outstanding balance more than 15 days after `due_date` (as of the payment date or the as-of date), add one LATE_FEE line of 2% of the outstanding balance, once per invoice.
+**Late fees.** A **fixed** late fee of INR 500 is added, once per invoice, as a LATE_FEE line dated the day after the grace period ends (due date + 15 days) if any amount is still unpaid at the end of the grace period.
 
 **Withdrawals and cancellations.** Withdrawal refund share of tuition paid, by days since term start: <= 14 days 100%, <= 30 days 50%, <= 45 days 25%, later 0%. The enrollment becomes WITHDRAWN and refunds are created as REQUESTED -> APPROVED -> PAID. A cancelled enrollment cancels its unpaid invoice.
 
@@ -90,3 +90,12 @@ Rules: inject only after the clean baseline passes validation; touch only the la
 - Invoice lines are copied from the fee schedule effective on the issue date; invoice totals are the sum of their lines.
 - Every status change is recorded in `status_event` (numbered in date order). The validator checks that each row's status equals the last event and that every step is an allowed transition.
 - Invoice statuses beyond ISSUED / CANCELLED (PARTIALLY_PAID, PAID, OVERDUE) are derived later, once payments exist.
+
+## 9. How scholarships, payments and late fees are generated
+
+- **Scholarships:** every non-cancelled invoice is checked against all schemes on the date the award is decided (1-14 days before invoice issue). The best scheme the student qualifies for gives the candidate award (percent or fixed, capped by the scheme cap and by the tuition). Exactly 15,000 candidates are awarded, chosen at random (limited funding). Each award is a negative SCHOLARSHIP_CREDIT line on the invoice, dated at invoice issue, and the scholarship moves AWARDED -> APPLIED.
+- **Payment behaviour per invoice:** 73% pay in full on time, 5% overpay, 10% pay in full but late, 8% pay only part, 4% pay nothing. Each paying invoice gets 1-4 installments (50/30/15/5%); counts are nudged so the total is exactly 50,000 payments.
+- **Late payers** pay their final installment 1-45 days after the grace period, and that installment includes the late fee. Partial and non-paying invoices keep the late fee unpaid.
+- **Overpayments** are allocated up to what is owed; the rest stays unallocated (credit on account).
+- **Invoice status at the as-of date:** PAID (allocations cover the total), PARTIALLY_PAID (some but not all), OVERDUE (nothing paid, past due), CANCELLED. Because the as-of date is after every due date, ISSUED does not appear at the end, but it appears in the history.
+- **Payments** are numbered in date order (PAY-2026-NNNNNN).

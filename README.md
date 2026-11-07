@@ -3,9 +3,9 @@
 Deterministic synthetic data generator and validator for a tuition, scholarship,
 payment and balance-reconciliation workflow. Fixed seed `20261022`, parameterized scale.
 
-> **Status:** master tables, enrollments, invoices, invoice lines and status history are generated,
-> validated and tested. Scholarships, payments, refunds, the ledger and anomaly injection are
-> being added next; this README is updated as each lands.
+> **Status:** master tables, enrollments, invoices, scholarships, waivers, payments, allocations,
+> late fees and status history are generated, validated and tested. Refunds, the ledger, anomaly
+> injection and the final exports are being added next; this README is updated as each lands.
 
 ## Quick start
 
@@ -34,6 +34,10 @@ Both commands print a short SHA-256 per file. Running it twice with the same see
 | `src/tuition_synth/reference_data.py` | Program catalog, fee amounts, scholarship schemes, name lists |
 | `src/tuition_synth/master.py` | Generators for the master tables |
 | `src/tuition_synth/transactions.py` | Enrollments, invoices, invoice lines |
+| `src/tuition_synth/rules.py` | Business rules as pure functions (eligibility, awards, late fee, net dues) |
+| `src/tuition_synth/scholarships.py` | Scholarship awards and fee waivers |
+| `src/tuition_synth/payments.py` | Payments, allocations, late fees, derived invoice status |
+| `src/tuition_synth/pipeline.py` | Runs every generator in dependency order |
 | `src/tuition_synth/events.py` | Status-history log (every state change is a row) |
 | `src/tuition_synth/validate.py` | Validator: structure, arithmetic, duplicates, lifecycle |
 | `src/tuition_synth/export.py` | Stable-format CSV writer and checksums |

@@ -61,12 +61,12 @@ SCHEMES = (
      date(2025, 12, 1), None),
     ("Middle Income Merit", "7.50", "MIDDLE", None, "PERCENT_OF_TUITION", "15", "20000",
      date(2025, 12, 1), None),
-    ("CS Excellence", "8.50", None, "BTECH-CS", "PERCENT_OF_TUITION", "20", "25000",
+    ("CS Excellence", "8.50", None, "BTECH-CS", "PERCENT_OF_TUITION", "35", "40000",
      date(2025, 12, 1), None),
     ("Data Science Fellowship", "8.00", None, "MSC-DS", "FIXED_AMOUNT", "20000", "20000",
      date(2025, 12, 1), None),
-    # Expires mid-year, so it can apply to Spring/Summer but not Fall.
-    ("First-Half Merit Boost", "7.50", None, None, "PERCENT_OF_TUITION", "10", "10000",
+    # Expires mid-year: awards decided after 2026-07-31 cannot use it.
+    ("First-Half Merit Boost", "7.50", None, None, "PERCENT_OF_TUITION", "20", "20000",
      date(2026, 1, 1), date(2026, 7, 31)),
 )
 

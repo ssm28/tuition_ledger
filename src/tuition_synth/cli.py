@@ -8,7 +8,7 @@ from .config import DEFAULT_SEED, Config
 from .docs import render_data_dictionary
 from .export import sha256_of, write_csv
 from .master import build_master
-from .transactions import build_core
+from .pipeline import build_all
 from .validate import run_all
 
 
@@ -42,7 +42,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{table:<13} {len(rows):>6} rows  sha256={sha256_of(path)[:12]}  {path}")
     elif args.command == "generate":
         cfg = Config(seed=args.seed, scale=args.scale)
-        tables = build_core(cfg)
+        tables = build_all(cfg)
         for table, rows in tables.items():
             path = args.out / f"{table}.csv"
             write_csv(path, table, rows)

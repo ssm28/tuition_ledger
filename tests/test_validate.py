@@ -4,10 +4,10 @@ from datetime import timedelta
 from decimal import Decimal
 
 from tuition_synth.config import Config
-from tuition_synth.transactions import build_core
+from tuition_synth.pipeline import build_all
 from tuition_synth.validate import run_all
 
-CLEAN = build_core(Config(scale=0.05))
+CLEAN = build_all(Config(scale=0.05))
 
 
 def broken():
@@ -24,7 +24,7 @@ def test_clean_data_has_no_issues():
 
 def test_detects_duplicate_invoice():
     t = broken()
-    original = next(i for i in t["invoice"] if i["status"] == "ISSUED")
+    original = next(i for i in t["invoice"] if i["status"] == "PAID")
     dup = dict(original, invoice_id=original["invoice_id"][:-6] + "000099")
     t["invoice"].append(dup)
     assert found(t, "duplicate_invoice", "invoice", dup["invoice_id"])
@@ -85,3 +85,52 @@ def test_detects_wrong_due_date_and_line_sign():
     t["invoice_line"][1]["amount"] = -t["invoice_line"][1]["amount"]
     checks = {i.check for i in run_all(t)}
     assert "invoice_due_date" in checks and "line_sign" in checks
+
+
+# ---------------------------------------------------------------- new checks
+def test_detects_allocation_beyond_payment_amount():
+    t = broken()
+    alloc = t["payment_allocation"][-1]
+    alloc["amount"] += Decimal("100000.00")
+    assert found(t, "allocation_exceeds_payment", "payment_allocation", alloc["allocation_id"])
+
+
+def test_detects_scholarship_exceeding_fees():
+    t = broken()
+    sch = t["scholarship"][0]
+    inv = next(i for i in t["invoice"]
+               if i["student_id"] == sch["student_id"] and i["term_id"] == sch["term_id"])
+    tuition = next(ln for ln in t["invoice_line"]
+                   if ln["line_type"] == "TUITION" and ln["invoice_id"] == inv["invoice_id"])
+    sch["award_amount"] = tuition["amount"] + Decimal("1.00")
+    assert found(t, "scholarship_exceeds_fees", "scholarship", sch["scholarship_id"])
+
+
+def test_detects_ineligible_scholarship():
+    t = broken()
+    sch = t["scholarship"][0]
+    student = next(s for s in t["student"] if s["student_id"] == sch["student_id"])
+    student["cgpa"] = Decimal("1.00")
+    assert found(t, "scholarship_not_eligible", "scholarship", sch["scholarship_id"])
+
+
+def test_detects_missing_late_fee():
+    t = broken()
+    fee = next(ln for ln in t["invoice_line"] if ln["line_type"] == "LATE_FEE")
+    t["invoice_line"].remove(fee)
+    assert found(t, "late_fee_missing", "invoice", fee["invoice_id"])
+
+
+def test_detects_wrong_invoice_status():
+    t = broken()
+    inv = next(i for i in t["invoice"] if i["status"] == "PAID")
+    inv["status"] = "OVERDUE"
+    assert found(t, "invoice_status", "invoice", inv["invoice_id"])
+
+
+def test_detects_allocation_for_someone_elses_payment():
+    t = broken()
+    pay = t["payment"][0]
+    other = next(s for s in t["student"] if s["student_id"] != pay["student_id"])
+    pay["student_id"] = other["student_id"]
+    assert any(i.check == "allocation_student_mismatch" for i in run_all(t))
