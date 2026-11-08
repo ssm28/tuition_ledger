@@ -1,5 +1,4 @@
 """Anomaly injection, ground truth and detection scoring (full scale)."""
-import copy
 import inspect
 from collections import Counter, defaultdict
 from decimal import Decimal

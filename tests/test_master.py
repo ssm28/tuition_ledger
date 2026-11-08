@@ -1,12 +1,11 @@
 import tempfile
 from collections import Counter
-from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 
 from tuition_synth import ids
 from tuition_synth.cli import main
-from tuition_synth.config import TERMS, Config
+from tuition_synth.config import Config
 from tuition_synth.export import sha256_of
 from tuition_synth.master import build_master
 from tuition_synth.reference_data import SCHEMES

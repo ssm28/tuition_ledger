@@ -7,7 +7,10 @@ from .anomalies import ISSUE_CHECKS
 
 FAMILIES = {
     "Primary-key uniqueness and ID format": ("pk_duplicate", "pk_format", "columns"),
-    "Foreign-key integrity": ("fk_missing",),
+    # joins: keys exist (fk_missing) and the rows on both sides of a join agree with each other
+    "Foreign-key integrity": ("fk_missing", "invoice_enrollment_mismatch", "line_fee_schedule_missing",
+                              "line_fee_type", "line_wrong_schedule", "line_schedule_not_effective",
+                              "allocation_student_mismatch", "refund_student_mismatch", "refund_enrollment"),
     "Required fields, types and allowed values (enums)": ("required", "type", "enum"),
     "Date ordering": ("withdrawal_date", "invoice_due_date", "line_date", "allocation_date", "refund_dates",
                       "ledger_sequence", "ledger_date_or_student"),
@@ -17,15 +20,16 @@ FAMILIES = {
         "refund_overpayment_amount", "ledger_amount_mismatch", "ledger_missing", "ledger_extra",
         "balance_ledger_mismatch", "scholarship_credit_mismatch", "scholarship_amount_mismatch"),
     "Lifecycle transitions": ("lifecycle_no_history", "lifecycle_chain", "lifecycle_transition",
-                              "lifecycle_state_mismatch"),
+                              "lifecycle_state_mismatch", "refund_processed_on"),
     "Duplicates": ("duplicate_invoice", "duplicate_enrollment", "duplicate_scholarship", "late_fee_duplicate",
                    "ledger_duplicate"),
     "Scholarship rules": ("scholarship_not_eligible", "scholarship_exceeds_cap", "scholarship_exceeds_fees",
                           "scholarship_no_invoice", "scholarship_credit_line", "scholarship_credit_wrong_invoice",
                           "waiver_target", "waiver_exceeds_fee"),
     "Allocation and refund limits": ("allocation_exceeds_payment", "allocation_exceeds_line", "allocation_amount",
-                                     "allocation_to_non_charge_line", "allocation_student_mismatch",
-                                     "refund_exceeds_net_paid", "refund_exceeds_payment", "refund_amount"),
+                                     "allocation_to_non_charge_line", "refund_exceeds_net_paid",
+                                     "refund_exceeds_payment", "refund_amount", "refund_rejected_but_eligible",
+                                     "payment_amount"),
 }
 
 

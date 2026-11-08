@@ -29,7 +29,7 @@ Details: [`reports/validation_summary_full.md`](reports/validation_summary_full.
 ```bash
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
-pytest                                                  # 109 tests, about a minute
+pytest                                                  # 114 tests, about a minute
 
 # small starter dataset in all formats (what is committed in data/starter)
 tuition-synth generate --seed 20261022 --scale 0.02 --formats csv,json,sql --out out/starter
@@ -81,9 +81,15 @@ Every derived number (invoice totals, net dues, balances, statuses, refund amoun
 source records by the rules in [`rules.py`](src/tuition_synth/rules.py), never drawn independently.
 Every status change is stored as a `status_event` row, so history is never overwritten.
 
-Documents: [`DESIGN.md`](DESIGN.md) (assumptions, rules, lifecycles, anomaly plan, limitations),
-[`docs/data_dictionary.md`](docs/data_dictionary.md) (every field: type, required, allowed values, unit,
-uniqueness, rule; generated from the schema).
+## Documentation
+
+| Document | What it is for |
+|---|---|
+| [`docs/ER_DIAGRAM.md`](docs/ER_DIAGRAM.md) | Entity-relationship diagram of the 14 tables, relationship table, one real invoice traced through every table |
+| [`docs/DEVELOPER_GUIDE.md`](docs/DEVELOPER_GUIDE.md) | Architecture, data flow, what every source file does, rules and constants, every validator check, tests, how to extend, troubleshooting |
+| [`DESIGN.md`](DESIGN.md) | Assumptions, business rules, lifecycles, anomaly plan, limitations |
+| [`docs/data_dictionary.md`](docs/data_dictionary.md) | Every field: type, required, allowed values, unit, uniqueness, rule (generated from the schema) |
+| [`AI_USAGE.md`](AI_USAGE.md), [`docs/PROMPT_LOG.md`](docs/PROMPT_LOG.md) | How AI assistance was used, and the prompts, unedited |
 
 ## The five injected anomalies
 
@@ -102,7 +108,7 @@ raises no issue on any unlabelled row (checked in `tests/test_anomalies.py`).
 | `rules.py` | Business rules as pure functions (eligibility, awards, late fee, net dues, refund tiers) |
 | `pipeline.py`, `anomalies.py`, `validate.py` | Orchestration, anomaly injection and scoring, validator |
 | `export.py`, `ddl.py`, `report.py`, `dataset.py`, `cli.py` | Exports, SQL, summary, command line |
-| `tests/` | 109 tests: rules, generators, validator (by breaking data on purpose), anomalies, exports, reproducibility |
+| `tests/` | 114 tests: rules, generators, validator (by breaking data on purpose), anomalies, exports, reproducibility, documentation in sync |
 
 ## Provenance and licence
 
